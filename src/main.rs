@@ -1,4 +1,4 @@
-//use std::io;
+use std::io;
 use serde::{Serialize, Deserialize};
 use serde_json::from_str;
 use reqwest::blocking::Client;
@@ -26,10 +26,35 @@ const KEY: &str = "";
 fn main() {
     
     let client: Client = Client::new();
-    
-    //println!("This is the response I get: {}", get_river_list(&client));
 
-    deserialize_river_list(get_river_list(&client).as_str());
+    println!("Enter the name of the river or creek you would like to get data for: ");  
+
+    let mut input = String::new();
+
+    io::stdin().read_line(&mut input).unwrap();
+
+    let river_list: Vec<River> = deserialize_river_list(get_river_list(&client).as_str());
+
+    let mut matches = Vec::new();
+    let mut counter: u32 = 0;
+    println!("Here are the results:");
+    for river in &river_list {
+        if river.name.contains(input.to_uppercase().trim()) {
+            counter += 1;
+            matches.push((&river.name, &river.id));
+            println!("[{}] {}", counter, river.name);
+        }
+    }
+
+    
+    if matches.len() > 0 {
+        let mut number = 0;
+        println!("Enter the number next to the station you would like to choose:");
+    }
+    else {
+        println!("Unable to find such a river in the database.")
+    }
+    
 }
 
 fn get_river_list (client: &Client) -> String {
