@@ -1,5 +1,5 @@
 use std::io;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use reqwest::blocking::Client;
 use serde_json::Error;
@@ -102,20 +102,42 @@ fn main() {
                             // Getting flow data and then deserializing it into a vector of Flow structs.
                             let flow_data_list = deserialize_river_flow(get_river_flow(&client, &chosen_river_id).as_str());
                             
-                            // Getting the last element in the vector, which is associated with the latest real-time piece of data.
-                            let last_element: usize = flow_data_list.len() - 1;
+                            // Getting the level data and then deserializing it into a vector of Flow structs.
+                            // We can reuse the structs used for flow since the json is in the same form for river level.
+                            let level_data_list = deserialize_river_flow(&get_river_level(&client, &chosen_river_id));
+
+                            // Getting the temperature data and then deserializing it into a vector of Flow structs.
+                            // We can reuse the structs just as we did above.
+                            //let temperature_data_list = deserialize_river_flow(&get_river_temperature(&client, &chosen_river_id));
+
+                            // Getting the last element in the flow vector, which is associated with the latest real-time piece of data.
+                            let last_element_flow: usize = flow_data_list.len() - 1;
+
+                            // Getting the last element in the level vector, which is associated with the latest real-time piece of data.
+                            let last_element_level: usize = level_data_list.len() - 1;
+
+                            // Getting the last element in the temperature vector which is associated with the latest real-time piece of data.
+                            //let last_element_temperature: usize = temperature_data_list.len() - 1;
                             
                             // Getting the latest flow value.
-                            let latest_river_flow = &flow_data_list[last_element].value;
+                            let latest_river_flow = &flow_data_list[last_element_flow].value;
+
+                            // Getting the latest level value.
+                            let latest_river_level = &level_data_list[last_element_level].value;
+
+                            // Getting the latest temperature value.
+                            //let latest_river_temperature = &temperature_data_list[last_element_temperature].value;
                             
                             // Getting the data associated with the latest flow value.
-                            let date = &flow_data_list[last_element].date;
+                            let date = &flow_data_list[last_element_flow].date;
                             
                             // Displaying all data to the user.
                             println!("Displaying Data:\n");
                             println!("Station Name: {} 🚧", &matches[n-1].0);
                             println!("Date: {} 📅", date);
-                            println!("River Flow: {} cubic metres per second 🌊\n", &latest_river_flow);
+                            println!("River Flow: {} cubic metres per second 🌊", &latest_river_flow);
+                            println!("River Level: {} metres 📏", &latest_river_level); 
+                            //println!("River Temperature: {} degrees Celsius 🌡️\n", &latest_river_temperature);
                             println!("Would you like to get data for another river? [y/n]");
                             
                             // Input for whether the user wants to get data for another river.
@@ -234,7 +256,59 @@ fn deserialize_river_flow (json_string: &str) -> Vec<Flow>{
         }
         Err(e) => {
             println!("{:?}", e);
-            panic!("Can't deserialize json for river flow")
+            panic!("Can't deserialize json for river data.")
         }
     }
+}
+
+// This function gets a String of river level data for a river with the associated id. 
+fn get_river_level(client: &Client, id: &String) -> String {
+    let url: String = format!("https://vps267042.vps.ovh.ca/scrapi/station/{}/primarylevel/?startDate={}&endDate={}&resultType=history&key={}", id, chrono::offset::Local::now().checked_sub_days(Days::new(1)).unwrap().format("%Y-%m-%d").to_string(), chrono::offset::Local::now().format("%Y-%m-%d").to_string(), KEY);
+    
+    // Getting the river level data. 
+    let level_data = client.get(url).send();
+
+    // Match statement in case getting level data is unsuccessful.
+    match level_data {
+        Ok(level) => {
+            // Converting the Response to text.
+            match level.text() {
+                Ok(l) => l,
+                Err(e) => {
+                    println!("{:?}", e);
+                    panic!("Can't convert river level to text.")        
+                }
+            }
+        },
+        Err(e) => {
+            println!("{:?}", e);
+            panic!("Error getting level.")
+        }
+    } 
+}
+
+// This function gets a String of river temperature data for a river with the associated id.
+fn get_river_temperature(client: &Client, id: &String) -> String {
+    let url: String = format!("https://vps267042.vps.ovh.ca/scrapi/station/{}/temperature/?startDate={}&endDate={}&resultType=history&key={}", id, chrono::offset::Local::now().checked_sub_days(Days::new(1)).unwrap().format("%Y-%m-%d").to_string(), chrono::offset::Local::now().format("%Y-%m-%d").to_string(), KEY);
+    
+    // Getting the river temperature data. 
+    let temperature_data = client.get(url).send();
+
+    // Match statement in case getting level data is unsuccessful.
+    match temperature_data {
+        Ok(temperature) => {
+            // Converting the Response to text.
+            match temperature.text() {
+                Ok(t) => t,
+                Err(e) => {
+                    println!("{:?}", e);
+                    panic!("Can't convert river temperature to text.")        
+                }
+            }
+        },
+        Err(e) => {
+            println!("{:?}", e);
+            panic!("Error getting temperature.")
+        }
+    } 
 }
