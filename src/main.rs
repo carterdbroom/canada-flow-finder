@@ -47,7 +47,7 @@ struct Flow {
     value: String
 }
 // Put your API key here
-const KEY: &str = "-O5A-mmDjkK19KriaFk0";
+const KEY: &str = "";
 fn main() {
     // Creating a reqwest client.
     let client: Client = Client::new();
