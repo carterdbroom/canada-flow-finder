@@ -106,27 +106,17 @@ fn main() {
                             // We can reuse the structs used for flow since the json is in the same form for river level.
                             let level_data_list = deserialize_river_flow(&get_river_level(&client, &chosen_river_id));
 
-                            // Getting the temperature data and then deserializing it into a vector of Flow structs.
-                            // We can reuse the structs just as we did above.
-                            //let temperature_data_list = deserialize_river_flow(&get_river_temperature(&client, &chosen_river_id));
-
                             // Getting the last element in the flow vector, which is associated with the latest real-time piece of data.
                             let last_element_flow: usize = flow_data_list.len() - 1;
 
                             // Getting the last element in the level vector, which is associated with the latest real-time piece of data.
                             let last_element_level: usize = level_data_list.len() - 1;
-
-                            // Getting the last element in the temperature vector which is associated with the latest real-time piece of data.
-                            //let last_element_temperature: usize = temperature_data_list.len() - 1;
                             
                             // Getting the latest flow value.
                             let latest_river_flow = &flow_data_list[last_element_flow].value;
 
                             // Getting the latest level value.
                             let latest_river_level = &level_data_list[last_element_level].value;
-
-                            // Getting the latest temperature value.
-                            //let latest_river_temperature = &temperature_data_list[last_element_temperature].value;
                             
                             // Getting the data associated with the latest flow value.
                             let date = &flow_data_list[last_element_flow].date;
@@ -137,7 +127,6 @@ fn main() {
                             println!("Date: {} 📅", date);
                             println!("River Flow: {} cubic metres per second 🌊", &latest_river_flow);
                             println!("River Level: {} metres 📏", &latest_river_level); 
-                            //println!("River Temperature: {} degrees Celsius 🌡️\n", &latest_river_temperature);
                             println!("Would you like to get data for another river? [y/n]");
                             
                             // Input for whether the user wants to get data for another river.
@@ -283,32 +272,6 @@ fn get_river_level(client: &Client, id: &String) -> String {
         Err(e) => {
             println!("{:?}", e);
             panic!("Error getting level.")
-        }
-    } 
-}
-
-// This function gets a String of river temperature data for a river with the associated id.
-fn get_river_temperature(client: &Client, id: &String) -> String {
-    let url: String = format!("https://vps267042.vps.ovh.ca/scrapi/station/{}/temperature/?startDate={}&endDate={}&resultType=history&key={}", id, chrono::offset::Local::now().checked_sub_days(Days::new(1)).unwrap().format("%Y-%m-%d").to_string(), chrono::offset::Local::now().format("%Y-%m-%d").to_string(), KEY);
-    
-    // Getting the river temperature data. 
-    let temperature_data = client.get(url).send();
-
-    // Match statement in case getting level data is unsuccessful.
-    match temperature_data {
-        Ok(temperature) => {
-            // Converting the Response to text.
-            match temperature.text() {
-                Ok(t) => t,
-                Err(e) => {
-                    println!("{:?}", e);
-                    panic!("Can't convert river temperature to text.")        
-                }
-            }
-        },
-        Err(e) => {
-            println!("{:?}", e);
-            panic!("Error getting temperature.")
         }
     } 
 }
